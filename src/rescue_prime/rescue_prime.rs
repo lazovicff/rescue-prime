@@ -1,7 +1,6 @@
 use crate::common::matrix::mmul_assign;
 use crate::common::sbox::sbox;
-use crate::sponge::{generic_hash};
-use crate::traits::{HashFamily, HashParams};
+use crate::traits::HashParams;
 use franklin_crypto::bellman::pairing::ff::Field;
 use franklin_crypto::bellman::pairing::Engine;
 use super::params::RescuePrimeParams;
@@ -11,12 +10,13 @@ use super::params::RescuePrimeParams;
 /// length of input and applies a padding rule which makes input size equals to multiple of
 /// rate parameter.
 /// Uses pre-defined state-width=3 and rate=2.
-pub fn rescue_prime_hash<E: Engine, const L: usize>(input: &[E::Fr; L]) -> [E::Fr; 2] {
+pub fn rescue_prime_hash<E: Engine, const L: usize>(input: &mut [E::Fr; 3]) -> [E::Fr; 3] {
     const WIDTH: usize = 3;
     const RATE: usize = 2;
 
     let params = RescuePrimeParams::<E, RATE, WIDTH>::default();
-    generic_hash(&params, input, None)
+    rescue_prime_round_function(&params, input);
+	*input
 }
 
 
@@ -29,11 +29,7 @@ pub(crate) fn rescue_prime_round_function<
     params: &P,
     state: &mut [E::Fr; WIDTH],
 ) {
-    assert_eq!(
-        params.hash_family(),
-        HashFamily::RescuePrime,
-        "Incorrect hash family!"
-    );
+	println!("Rescue Prime Full Rounds: {}", params.number_of_full_rounds() - 1);
     for round in 0..params.number_of_full_rounds() - 1 {
         // sbox alpha
         sbox::<E>(params.alpha(), state);

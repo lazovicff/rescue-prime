@@ -5,7 +5,7 @@ extern crate num_bigint;
 extern crate num_integer;
 extern crate num_traits;
 use crate::common::utils::biguint_to_u64_vec;
-use crate::traits::{CustomGate, HashFamily, HashParams, Sbox};
+use crate::traits::{HashParams, Sbox};
 use franklin_crypto::bellman::pairing::bn256::Bn256;
 use franklin_crypto::bellman::{Field, PrimeField};
 use num_bigint::{BigInt, BigUint, Sign};
@@ -14,26 +14,14 @@ use num_traits::{One, ToPrimitive, Zero};
 use std::convert::TryInto;
 use std::ops::{Mul, Sub};
 
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug)]
 pub struct RescuePrimeParams<E: Engine, const RATE: usize, const WIDTH: usize> {
     pub(crate) allows_specialization: bool,
     pub(crate) full_rounds: usize,
-    #[serde(serialize_with = "crate::serialize_vec_of_arrays")]
-    #[serde(deserialize_with = "crate::deserialize_vec_of_arrays")]
     pub(crate) round_constants: Vec<[E::Fr; WIDTH]>,
-    #[serde(serialize_with = "crate::serialize_array_of_arrays")]
-    #[serde(deserialize_with = "crate::deserialize_array_of_arrays")]
     pub(crate) mds_matrix: [[E::Fr; WIDTH]; WIDTH],
     pub(crate) alpha: Sbox,
     pub(crate) alpha_inv: Sbox,
-    pub(crate) custom_gate: CustomGate,
-}
-impl<E: Engine, const RATE: usize, const WIDTH: usize> PartialEq
-    for RescuePrimeParams<E, RATE, WIDTH>
-{
-    fn eq(&self, other: &Self) -> bool {
-        self.hash_family() == other.hash_family()
-    }
 }
 
 impl<E: Engine, const RATE: usize, const WIDTH: usize> Default
@@ -48,27 +36,6 @@ impl<E: Engine, const RATE: usize, const WIDTH: usize> Default
             mds_matrix: *params.mds_matrix(),
             alpha: Sbox::Alpha(alpha),
             alpha_inv: Sbox::AlphaInverse(alpha_inv, alpha),
-            custom_gate: CustomGate::None,
-        }
-    }
-}
-impl<E: Engine, const RATE: usize, const WIDTH: usize> RescuePrimeParams<E, RATE, WIDTH> {
-    pub fn new_with_width3_custom_gate() -> Self {
-        Self::new_with_custom_gate(CustomGate::QuinticWidth3)
-    }
-    pub fn new_with_width4_custom_gate() -> Self {
-        Self::new_with_custom_gate(CustomGate::QuinticWidth4)
-    }
-    fn new_with_custom_gate(custom_gate: CustomGate) -> Self {
-        let (params, alpha, alpha_inv) = super::params::rescue_prime_params::<E, RATE, WIDTH>();
-        Self {
-            allows_specialization: false,
-            full_rounds: params.full_rounds,
-            round_constants: params.round_constants().try_into().expect("constant array"),
-            mds_matrix: *params.mds_matrix(),
-            alpha: Sbox::Alpha(alpha),
-            alpha_inv: Sbox::AlphaInverse(alpha_inv, alpha),
-            custom_gate,
         }
     }
 }
@@ -79,9 +46,6 @@ impl<E: Engine, const RATE: usize, const WIDTH: usize> HashParams<E, RATE, WIDTH
     #[inline]
     fn allows_specialization(&self) -> bool {
         self.allows_specialization
-    }
-    fn hash_family(&self) -> HashFamily {
-        HashFamily::RescuePrime
     }
 
     fn constants_of_round(&self, round: usize) -> &[E::Fr; WIDTH] {
@@ -106,22 +70,6 @@ impl<E: Engine, const RATE: usize, const WIDTH: usize> HashParams<E, RATE, WIDTH
 
     fn alpha_inv(&self) -> &Sbox {
         &self.alpha_inv
-    }
-
-    fn optimized_mds_matrixes(&self) -> (&[[E::Fr; WIDTH]; WIDTH], &[[[E::Fr; WIDTH]; WIDTH]]) {
-        unimplemented!("RescuePrime doesn't use optimized mds matrixes")
-    }
-
-    fn optimized_round_constants(&self) -> &[[E::Fr; WIDTH]] {
-        unimplemented!("RescuePrime doesn't use optimized round constants")
-    }
-
-    fn custom_gate(&self) -> CustomGate {
-        self.custom_gate
-    }
-
-    fn use_custom_gate(&mut self, gate: CustomGate) {
-        self.custom_gate = gate;
     }
 }
 

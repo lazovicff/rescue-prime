@@ -1,13 +1,12 @@
-use franklin_crypto::bellman::pairing::ff::{Field, PrimeField};
+use franklin_crypto::bellman::pairing::ff::Field;
 use franklin_crypto::bellman::Engine;
 use rand::Rng;
 extern crate num_bigint;
 extern crate num_integer;
 extern crate num_traits;
 
-use self::num_bigint::{BigInt, BigUint};
-use self::num_integer::{ExtendedGcd, Integer};
-use self::num_traits::{One, ToPrimitive, Zero};
+use self::num_bigint::BigUint;
+use self::num_traits::{ToPrimitive, Zero};
 use std::convert::TryInto;
 
 // Batch inverses vector of elements required for MDS matrix.
@@ -62,11 +61,9 @@ pub(crate) fn scalar_product<E: Engine>(a: &[E::Fr], b: &[E::Fr]) -> E::Fr {
 }
 
 // Construct MDS matrix which required by lineary layer of permutation function.
-pub(crate) fn construct_mds_matrix<E: Engine, R: Rng, const S: usize>(
+pub(crate) fn construct_mds_matrix<E: Engine, R: Rng, const WIDTH: usize>(
     rng: &mut R,
-) -> [[E::Fr; S]; S] {
-    let WIDTH = S;
-
+) -> [[E::Fr; WIDTH]; WIDTH] {
     loop {
         let x: Vec<E::Fr> = (0..WIDTH).map(|_| rng.gen()).collect();
         let y: Vec<E::Fr> = (0..WIDTH).map(|_| rng.gen()).collect();
@@ -141,57 +138,14 @@ pub(crate) fn construct_mds_matrix<E: Engine, R: Rng, const S: usize>(
         // now we need to do the inverse
         batch_inversion::<E>(&mut mds_matrix[..]);
 
-        let mut result = [[E::Fr::zero(); S]; S];
+        let mut result = [[E::Fr::zero(); WIDTH]; WIDTH];
 
         mds_matrix
-            .chunks_exact(S)
+            .chunks_exact(WIDTH)
             .zip(result.iter_mut())
             .for_each(|(values, row)| *row = values.try_into().expect("row in const"));
 
         return result;
-    }
-}
-
-pub(crate) fn compute_gcd<E: Engine, const N: usize>(n: u64) -> Option<[u64; N]> {
-    let y = compute_gcd_vec::<E>(n);
-
-    match y {
-        Some(value) => return Some(value.try_into().unwrap()),
-        _ => return None,
-    }
-}
-
-// Computes GCD of an element. It basically computes inverse of alpha in given finite field.
-pub(crate) fn compute_gcd_biguint<E: Engine>(n: u64) -> Option<BigUint> {
-    let n_big = BigUint::from(n);
-
-    let mut p_minus_one_biguint = BigUint::from(0u64);
-    for limb in E::Fr::char().as_ref().iter().rev() {
-        p_minus_one_biguint <<= 64;
-        p_minus_one_biguint += BigUint::from(*limb);
-    }
-
-    p_minus_one_biguint -= BigUint::one();
-
-    let alpha_signed = BigInt::from(n_big);
-    let p_minus_one_signed = BigInt::from(p_minus_one_biguint);
-
-    let ExtendedGcd { gcd, x: _, mut y, .. } = p_minus_one_signed.extended_gcd(&alpha_signed);
-    assert!(gcd.is_one());
-    if y < BigInt::zero() {
-        y += p_minus_one_signed;
-        
-    }
-
-    y.to_biguint()
-}
-
-pub(crate) fn compute_gcd_vec<E: Engine>(n: u64) -> Option<Vec<u64>> {
-    let y = compute_gcd_biguint::<E>(n);
-
-    match y {
-        Some(value) => return Some(biguint_to_u64_vec(value)),
-        _ => return None,
     }
 }
 
@@ -212,4 +166,3 @@ pub(crate) fn biguint_to_u64_vec(mut v: BigUint) -> Vec<u64> {
     assert!(v.is_zero());
     ret
 }
-

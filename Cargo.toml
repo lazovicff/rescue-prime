@@ -1,17 +1,12 @@
 [package]
-name = "rescue_poseidon"
-description = "Sponge construction based Algebraic Hash Functions"
+name = "rescue_prime"
+description = "Rescue prime"
 keywords = ["poseidon", "rescue", "rescue prime", "sponge", "duplex sponge", "algebraic hash function", "arithmetization oriented hash function"]
 version = "0.4.0"
-authors = ["Sait Imamoglu <si@matterlabs.dev>"]
+authors = ["Sait Imamoglu <si@matterlabs.dev>, Filip Lazovic <lazovicff@gmail.com>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-
-franklin_crypto = {package = "franklin-crypto", features = ["plonk"], git = "https://github.com/matter-labs/franklin-crypto", branch = "dev"}
-# franklin_crypto = {package = "franklin-crypto", features = ["plonk"], path = "../franklin-crypto"}
 num-bigint = "0.3"
 num-integer = "0.1"
 num-iter = "0.1"
@@ -19,37 +14,10 @@ rand = "0.4"
 byteorder = "1"
 num-traits = "0.2"
 sha3 = "0.9.1"
-serde = {version = "1", features = ["derive"]}
-addchain = "0.2"
-smallvec = "1.9"
-blake2 = "0.10"
-rayon = {version = "1.5", optional = true}
-lazy_static = {version = "1.4", optional = true}
-futures = {version = "*", features = ["executor", "thread-pool"], optional = true}
-
-[dev-dependencies]
-# reference poseidon does not uses specialization so some tests will fail.
-poseidon_hash = {git = "https://github.com/shamatar/poseidon_hash"}
-# poseidon_hash = {path = "../../shamatar/poseidon_hash"}
-criterion = "0.3"
 hex = "0.4"
 
-# [profile.bench]
-# opt-level = 3
-# debug = false
-# debug-assertions = false
-# overflow-checks = false
-# lto = false
-# panic = 'unwind'
-# incremental = false
-# codegen-units = 16
-# rpath = false
-
-[features]
-default = []
-rayon = ["dep:rayon"]
-futures = ["dep:lazy_static", "dep:futures"]
-
-[[bench]]
-name = "benches"
-harness = false
+[dependencies.franklin_crypto]
+package = "franklin-crypto"
+features = ["plonk"]
+git = "https://github.com/matter-labs/franklin-crypto"
+branch = "dev"
