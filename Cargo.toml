@@ -1,5 +1,5 @@
 [package]
-name = "rescue_prime"
+name = "rescue-prime"
 description = "Rescue prime"
 keywords = ["poseidon", "rescue", "rescue prime", "sponge", "duplex sponge", "algebraic hash function", "arithmetization oriented hash function"]
 version = "0.4.0"

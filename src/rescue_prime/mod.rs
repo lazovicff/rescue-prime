@@ -1,5 +1,4 @@
-#[macro_use]
-pub(crate) mod rescue_prime;
-pub(crate) mod params;
+mod rescue_prime;
+mod params;
 
-pub use rescue_prime::*;
+pub use self::rescue_prime::*;

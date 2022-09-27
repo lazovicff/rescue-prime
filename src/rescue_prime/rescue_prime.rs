@@ -10,10 +10,11 @@ use super::params::RescuePrimeParams;
 /// length of input and applies a padding rule which makes input size equals to multiple of
 /// rate parameter.
 /// Uses pre-defined state-width=3 and rate=2.
-pub fn rescue_prime_hash<E: Engine, const L: usize>(input: &mut [E::Fr; 3]) -> [E::Fr; 3] {
-    const WIDTH: usize = 3;
-    const RATE: usize = 2;
-
+pub fn rescue_prime_hash<
+	E: Engine,
+	const WIDTH: usize,
+	const RATE: usize
+>(input: &mut [E::Fr; WIDTH]) -> [E::Fr; WIDTH] {
     let params = RescuePrimeParams::<E, RATE, WIDTH>::default();
     rescue_prime_round_function(&params, input);
 	*input
